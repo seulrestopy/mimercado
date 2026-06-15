@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="MiMercado">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1F4E79">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%231F4E79'/><text y='68' x='50' text-anchor='middle' font-size='55'>🛒</text></svg>">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestión de Compras</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root {
+  --bg: #F0F3F7;
+  --surface: #FFFFFF;
+  --surface2: #F7F9FB;
+  --border: #E2E8F0;
+  --primary: #1F4E79;
+  --primary-light: #2D6FA3;
+  --accent: #E67E22;
+  --text: #1A2535;
+  --text2: #5A6A7E;
+  --text3: #9AABB8;
+  --green: #21863D;
+  --red: #C0392B;
+  --yellow: #F39C12;
+  --radius: 12px;
+  --shadow: 0 2px 12px rgba(0,0,0,0.07);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+/* ── NAV ── */
+.nav { background: var(--primary); color: white; padding: 0 24px; display: flex; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.2); position: sticky; top: 0; z-index: 100; }
+.nav-logo { font-size: 18px; font-weight: 800; letter-spacing: -0.5px; padding: 16px 20px 16px 0; border-right: 1px solid rgba(255,255,255,0.2); margin-right: 8px; white-space: nowrap; }
+.nav-logo span { color: #F5C842; }
+.nav-tabs { display: flex; flex: 1; }
+.nav-tab { padding: 18px 20px; font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.65); cursor: pointer; border-bottom: 3px solid transparent; transition: all .18s; white-space: nowrap; }
+.nav-tab:hover { color: white; background: rgba(255,255,255,0.07); }
+.nav-tab.active { color: white; border-bottom-color: #F5C842; }
+
+/* ── LAYOUT ── */
+.page { display: none; padding: 28px 24px; max-width: 1100px; margin: 0 auto; }
+.page.active { display: block; }
+
+/* ── CARDS ── */
+.card { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); border: 1px solid var(--border); margin-bottom: 18px; overflow: hidden; }
+.card-head { padding: 14px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.card-title { font-size: 13px; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; }
+
+/* ── STORE SECTION ── */
+.store-block { margin-bottom: 24px; }
+.store-hdr { display: flex; align-items: center; justify-content: space-between; padding: 9px 14px; border-radius: 8px 8px 0 0; color: white; font-size: 13px; font-weight: 700; }
+.store-hdr .store-sub { font-size: 12px; font-weight: 600; opacity: 0.9; }
+.store-rows { border: 1px solid var(--border); border-top: none; border-radius: 0 0 8px 8px; overflow: hidden; }
+.item-row { display: grid; grid-template-columns: 1fr 70px 130px 100px; align-items: center; padding: 8px 14px; border-bottom: 1px solid #F0F4F8; transition: background .1s; }
+.item-row:last-child { border-bottom: none; }
+.item-row:hover { background: #F7FAFD; }
+.item-name { font-size: 13px; font-weight: 500; }
+.item-name .irreg { font-size: 10px; color: var(--yellow); font-weight: 700; margin-left: 5px; background: #FEF9E7; padding: 1px 5px; border-radius: 4px; }
+.item-unit { font-size: 11px; color: var(--text3); text-align: center; }
+.qty-wrap { display: flex; align-items: center; justify-content: center; gap: 6px; }
+.qty-btn { width: 26px; height: 26px; border: 1.5px solid var(--border); background: var(--surface2); border-radius: 6px; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text2); transition: all .15s; line-height: 1; }
+.qty-btn:hover { border-color: var(--primary-light); color: var(--primary); background: #EEF4FB; }
+.qty-input { width: 46px; text-align: center; border: 1.5px solid var(--border); border-radius: 6px; padding: 4px; font-size: 14px; font-weight: 700; color: var(--primary); outline: none; }
+.qty-input:focus { border-color: var(--primary-light); }
+.qty-input.changed { border-color: var(--accent); color: var(--accent); background: #FEF6EE; }
+.item-sub { text-align: right; font-size: 12px; color: var(--text2); }
+
+/* ── SUMMARY BAR ── */
+.summary-bar { position: sticky; bottom: 0; background: var(--primary); color: white; padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 -4px 16px rgba(0,0,0,0.15); z-index: 50; gap: 14px; flex-wrap: wrap; }
+.summary-total { font-size: 18px; font-weight: 800; }
+.summary-label { font-size: 12px; opacity: 0.7; margin-bottom: 2px; }
+.summary-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn { padding: 10px 18px; border-radius: 8px; border: none; font-size: 13px; font-weight: 700; cursor: pointer; transition: all .15s; display: inline-flex; align-items: center; gap: 7px; font-family: inherit; }
+.btn:active { transform: scale(0.97); }
+.btn-primary { background: #F5C842; color: #1A2535; }
+.btn-primary:hover { background: #F0BE30; }
+.btn-ghost { background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3); }
+.btn-ghost:hover { background: rgba(255,255,255,0.25); }
+.btn-outline { background: white; color: var(--primary); border: 1.5px solid var(--border); }
+.btn-outline:hover { border-color: var(--primary-light); background: #F4F8FC; }
+.btn-green { background: var(--green); color: white; }
+.btn-green:hover { background: #1a6e31; }
+.btn-red { background: var(--red); color: white; }
+.btn-sm { padding: 6px 12px; font-size: 12px; }
+
+/* ── DATE ROW ── */
+.date-row { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+.date-row label { font-size: 13px; font-weight: 700; color: var(--text2); }
+.date-input, .form-input, .form-select { border: 1.5px solid var(--border); border-radius: 8px; padding: 8px 14px; font-size: 14px; color: var(--text); outline: none; transition: border-color .15s; font-family: inherit; background: white; }
+.date-input:focus, .form-input:focus, .form-select:focus { border-color: var(--primary-light); }
+.hint-badge { background: #FEF9E7; color: #B7770D; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px; border: 1px solid #FDEBD0; }
+
+/* ── TABLES ── */
+.hist-table, .master-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.hist-table th, .master-table th { background: var(--surface2); padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 0.4px; border-bottom: 2px solid var(--border); }
+.hist-table td, .master-table td { padding: 9px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.hist-table tr:hover td, .master-table tr:hover td { background: var(--surface2); }
+.price-up { color: var(--red); font-weight: 600; font-size: 12px; }
+.price-down { color: var(--green); font-weight: 600; font-size: 12px; }
+.price-same { color: var(--text3); font-size: 12px; }
+.week-total { font-weight: 700; color: var(--primary); }
+
+/* ── STATS ── */
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 20px; }
+.stat-card { background: white; border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+.stat-label { font-size: 11px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 6px; }
+.stat-value { font-size: 22px; font-weight: 800; color: var(--primary); }
+.stat-sub { font-size: 11px; color: var(--text3); margin-top: 3px; }
+
+/* ── CHART ── */
+.chart-wrap { padding: 16px 20px; }
+.bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.bar-label { width: 110px; font-size: 12px; color: var(--text2); text-align: right; flex-shrink: 0; }
+.bar-track { flex: 1; background: #EEF2F7; border-radius: 4px; height: 20px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 4px; display: flex; align-items: center; padding-left: 8px; background: var(--primary); }
+.bar-val { font-size: 11px; font-weight: 700; color: white; white-space: nowrap; }
+
+/* ── PRODUCT MANAGEMENT ── */
+.prod-toolbar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+.search-input { flex: 1; min-width: 200px; }
+.prod-row-actions { display: flex; gap: 6px; }
+.icon-btn { width: 30px; height: 30px; border: 1.5px solid var(--border); background: white; border-radius: 7px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-size: 14px; transition: all .15s; }
+.icon-btn:hover { border-color: var(--primary-light); background: #F4F8FC; }
+.icon-btn.del:hover { border-color: var(--red); background: #FDF0EF; }
+.icon-btn:disabled { opacity: 0.25; cursor: not-allowed; pointer-events: none; }
+
+/* ── EMPTY ── */
+.empty { text-align: center; padding: 48px 20px; color: var(--text3); }
+.empty-icon { font-size: 40px; margin-bottom: 12px; }
+.empty-text { font-size: 15px; font-weight: 600; color: var(--text2); margin-bottom: 6px; }
+
+/* ── MODAL ── */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 200; align-items: center; justify-content: center; padding: 20px; }
+.modal-overlay.open { display: flex; }
+.modal { background: white; border-radius: 16px; padding: 28px; max-width: 460px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto; }
+.modal h3 { font-size: 17px; font-weight: 800; margin-bottom: 18px; }
+.form-group { margin-bottom: 14px; }
+.form-group label { display: block; font-size: 12px; font-weight: 700; color: var(--text2); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.3px; }
+.form-group .form-input, .form-group .form-select { width: 100%; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 22px; }
+
+/* ── TOAST ── */
+.toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(20px); background: #1A2535; color: white; padding: 12px 22px; border-radius: 24px; font-size: 13px; font-weight: 600; opacity: 0; transition: all .3s; z-index: 300; white-space: nowrap; pointer-events: none; }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ── PRINT VIEW ── */
+#printArea { display: none; }
+@media print {
+  body * { visibility: hidden; }
+  #printArea, #printArea * { visibility: visible; }
+  #printArea { display: block !important; position: absolute; left: 0; top: 0; width: 100%; }
+  @page { size: A4 landscape; margin: 8mm 10mm; }
+}
+.print-sheet { font-family: Arial, sans-serif; color: #000; background: white; padding: 0; }
+.print-title { font-size: 16px; font-weight: 800; padding: 4px 0 2px; border-bottom: 2.5px solid #1F4E79; margin-bottom: 2px; display: flex; justify-content: space-between; align-items: baseline; }
+.print-total { font-size: 12px; font-weight: 700; color: #1F4E79; }
+.print-legend { font-size: 8.5px; color: #555; margin-bottom: 6px; display: flex; gap: 16px; }
+.print-cols { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0 14px; align-items: start; }
+.print-col { display: flex; flex-direction: column; gap: 0; }
+.print-store-block { margin-bottom: 6px; break-inside: avoid; }
+.print-store-hdr { font-size: 10px; font-weight: 800; color: white; padding: 2.5px 7px; margin: 5px 0 2px; border-radius: 3px; }
+.print-item { display: grid; grid-template-columns: 13px 16px 1fr 52px 13px; align-items: center; gap: 4px; padding: 1.5px 0; font-size: 9.5px; border-bottom: 0.5px dotted #ccc; }
+.print-chk { width: 11px; height: 11px; border: 1.2px solid #444; border-radius: 2px; display: inline-block; }
+.print-num { color: #888; font-size: 8.5px; text-align: right; }
+.print-pname { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.print-pqty { text-align: right; font-size: 9px; color: #333; white-space: nowrap; }
+.print-foot { margin-top: 8px; font-size: 8.5px; color: #666; display: flex; justify-content: space-between; border-top: 1px solid #999; padding-top: 4px; }
+
+@media (max-width: 640px) {
+  .nav-tab { padding: 16px 12px; font-size: 12px; }
+  .page { padding: 16px 14px; }
+  .item-row { grid-template-columns: 1fr 55px 110px; }
+  .item-sub { display: none; }
+  .form-row { grid-template-columns: 1fr; }
+}
+
+/* ── iOS 홈화면 앱 모드 ── */
+@supports (-webkit-touch-callout: none) {
+  body { padding-top: env(safe-area-inset-top); }
+  .nav { padding-top: calc(env(safe-area-inset-top) + 0px); position: fixed; top: 0; left: 0; right: 0; }
+  .page { padding-top: calc(env(safe-area-inset-top) + 72px); }
+  .summary-bar { padding-bottom: calc(env(safe-area-inset-bottom) + 14px); }
+}
+</style>
+
+<script>
+// 오늘(2026-06-11) 데이터 초기 주입 — 최초 실행 시 1회
+(function() {
+  const key = 'mercadoThisWeek';
+  const dateKey = 'mercadoThisWeekDate';
+  const initKey = 'mercadoInitDone_20260611';
+  if (localStorage.getItem(initKey)) return;  // 이미 주입됨
+  const todayData = {"MEGA": {"ARROZ COMUN 30KG": 0, "FIDEO DE SPAGETTI": 3, "DESODORANTE": 0, "LECHE CONDENSADA": 2, "PDT 250ML": 0, "PDT 500ML": 0, "PEPSI 250ML": 0, "PEPSI 500ML": 0, "PULP 250ML": 0, "POLVO DE NARANJA": 0, "ACEITE DE OLIVA 1L": 0, "AZUCAR": 2, "EDULCORANTE": 1, "KETCHUP": 1, "MAYONESA": 0, "SAL FINA / GRUESO": 0, "SALSA DE SOJA": 3, "VINAGRON 5L": 1, "CORONA": 0, "HEINEKEN": 0, "AYUDIN 5L": 1, "BOLSA DE BASURA 150L": 1, "BOLSA DE BASURA 60L": 0, "DETERGENTE": 2, "ESPONJA": 2, "GUANTE G": 1, "JABON": 1, "UVITA": 1, "SIKA SALSA PICANTE": 1, "MOSTAZA": 1}, "VERDURAS EMA": {"NARANJA": 0, "BATATA": 2, "CEBOLITA": 4, "CEBOLLA": 0, "CEBOLLA M": 0, "JENGIBRE": 0, "LECHUGA": 0, "LOCOTE ROJO": 1, "LOCOTE VERDE": 1, "PAPITA": 1, "PEPINO": 1, "PEREJIL": 1, "REPOLLO": 1, "TOMATE": 5, "ZANAHORIA": 1, "ZUKINI": 0}, "HANIL": {"HONDASHI": 0}, "RUBEN": {"ACEITE PARA FRITURA": 0}, "ILMI": {"ALAMBRILLO": 1, "ACEITE DE SESAMO": 1, "SESAMO": 0}, "MILU": {"BOLSA DE FIDEO": 0, "BOLSA DE PAPEL": 0, "BOLSA DE PRIMAVERA": 0, "CARTON N2": 2, "CARTON N3": 0, "ISOPOR R8": 0, "PLASTICO CUBIERTOS": 0, "PLASTICO CUCHILLO": 2, "PLASTICO TENEDOR": 1}, "SIBARITA": {"QUESO PARAGUAY": 1, "ALMIDON": 2, "COMINO": 0, "HARINA DE MAIZ": 0, "OREGANO": 1, "PIMIENTA": 0, "ROJO P. AGRIDULCE": 1, "SODA GAUSTICA": 0}, "CASA DEL QUESO": {"PAPA FRITA": 0, "QUESO CHEDDAR": 1, "PAPEL FRITO": 0}, "Bebidas": {"COCA CON CAFÉ": 1, "COCA LATA": 0, "COCA ZERO LATA": 0, "FANTA MBRUCUYA": 2, "FANTA NARANJA": 1, "FANTA UVA": 4, "GUARANA ANTARTICA": 1, "GUARANA ANTARTICA ZERO": 1, "MONSTER": 1, "PEPSI": 0, "PEPSI BLACK": 2, "SPRITE": 2}, "ORIENTAL": {"PALITOS": 0, "ARROZ FORTUNA 30KG": 0, "ACELGA": 0}};
+  localStorage.setItem(key, JSON.stringify(
+    Object.fromEntries(
+      Object.entries(todayData).map(([store, qtyMap]) => [
+        store,
+        Object.entries(qtyMap).map(([name, qty]) => ({ name, qty }))
+      ])
+    )
+  ));
+  localStorage.setItem(dateKey, '2026-06-11');
+  localStorage.setItem(initKey, '1');
+})();
+</script>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-logo">🛒 <span>Mi</span>Mercado</div>
+  <div class="nav-tabs">
+    <div class="nav-tab active" data-page="input" onclick="showPage('input', this)">📝 Lista Semanal</div>
+    <div class="nav-tab" data-page="history" onclick="showPage('history', this)">📊 Historial</div>
+    <div class="nav-tab" data-page="master" onclick="showPage('master', this)">⚙️ Productos</div>
+  </div>
+</nav>
+
+<!-- PAGE 1: Lista Semanal -->
+<div id="page-input" class="page active">
+  <div class="date-row">
+    <label>Fecha de compra</label>
+    <input type="date" id="purchaseDate" class="date-input" onchange="saveThisWeek()">
+    <span class="hint-badge">🟡 "revisar" = compra irregular</span>
+    <span id="autosaveBadge" style="font-size:11px;color:var(--text3);margin-left:4px"></span>
+  </div>
+  <div id="storeBlocks"></div>
+  <div style="height:80px"></div>
+</div>
+
+<!-- PAGE 2: Historial -->
+<div id="page-history" class="page">
+  <div class="stats-grid" id="statsGrid"></div>
+  <div class="card">
+    <div class="card-head"><div class="card-title">📈 Gasto semanal</div></div>
+    <div class="chart-wrap" id="weeklyChart"></div>
+  </div>
+  <div class="card">
+    <div class="card-head">
+      <div class="card-title">💰 Variación de precios</div>
+      <input type="text" id="priceSearchInput" placeholder="Buscar producto..." class="form-input" style="width:200px;font-size:12px;padding:6px 12px" oninput="renderPriceHistory()">
+    </div>
+    <div style="overflow-x:auto">
+      <table class="hist-table">
+        <thead><tr><th>Producto</th><th>Proveedor</th><th>Último precio</th><th>Variación</th><th>Mínimo</th><th>Máximo</th><th>Compras</th></tr></thead>
+        <tbody id="priceHistBody"></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-head">
+      <div class="card-title">📋 Historial semanal</div>
+      <button class="btn btn-outline btn-sm" onclick="exportHistoryExcel()">📥 Exportar todo (Excel)</button>
+    </div>
+    <div style="overflow-x:auto">
+      <table class="hist-table">
+        <thead><tr><th>Fecha</th><th>MEGA</th><th>Verduras</th><th>Embalaje/Bebidas</th><th>Otros</th><th>Total</th><th></th></tr></thead>
+        <tbody id="weeklyHistBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 3: Productos -->
+<div id="page-master" class="page">
+  <div class="prod-toolbar">
+    <input type="text" id="prodSearch" class="form-input search-input" placeholder="🔍 Buscar producto..." oninput="renderMaster()">
+    <button class="btn btn-green" onclick="openAddModal()">＋ Agregar producto</button>
+    <button class="btn btn-outline" onclick="exportMasterExcel()">📥 Excel</button>
+  </div>
+  <div id="masterContent"></div>
+</div>
+
+<!-- SUMMARY BAR -->
+<div class="summary-bar" id="summaryBar">
+  <div>
+    <div class="summary-label">Total estimado</div>
+    <div class="summary-total" id="summaryTotal">₲ 0</div>
+  </div>
+  <div class="summary-actions">
+    <button class="btn btn-ghost" onclick="resetQty()">↺ Restaurar</button>
+    <button class="btn btn-ghost" onclick="printList()">🖨 Imprimir</button>
+    <button class="btn btn-primary" onclick="completeWeek()">✅ Completar y Descargar</button>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h3 id="modalTitle"></h3>
+    <div id="modalBody"></div>
+    <div class="modal-actions" id="modalActions"></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- PRINT AREA -->
+<div id="printArea"></div>
+
+<script>
+// ════════════════════════════════════════════════════════════
+//  DATA
+// ════════════════════════════════════════════════════════════
+const STORES_ORDER = ['MEGA','VERDURAS EMA','HANIL','RUBEN','ILMI','MILU','SIBARITA','CASA DEL QUESO','Bebidas','ORIENTAL'];
+const STORE_COLORS = {
+  'MEGA':'#1F4E79','VERDURAS EMA':'#2D6A4F','HANIL':'#5B3FA0',
+  'RUBEN':'#A93226','ILMI':'#7D6608','MILU':'#515A6B',
+  'SIBARITA':'#A04000','CASA DEL QUESO':'#6E4B2A','Bebidas':'#1A5276','ORIENTAL':'#1A6B6B'
+};
+const STORE_GROUP = {
+  'MEGA':'MEGA', 'VERDURAS EMA':'Verduras', 'HANIL':'Verduras',
+  'RUBEN':'Verduras', 'ILMI':'Verduras', 'ORIENTAL':'Verduras',
+  'MILU':'Embalaje/Bebidas', 'Bebidas':'Embalaje/Bebidas', 'SIBARITA':'Otros', 'CASA DEL QUESO':'Otros'
+};
+
+const INITIAL_MASTER = {"MEGA":[{"name":"ARROZ COMUN 30KG","unit":"포","qty":1,"price":155000,"note":"cada 3 semanas"},{"name":"FIDEO DE SPAGETTI","unit":"UNI","qty":3,"price":5500,"note":""},{"name":"DESODORANTE","unit":"UNI","qty":0,"price":35000,"note":"cada 3 semanas"},{"name":"LECHE CONDENSADA","unit":"UNI","qty":2,"price":15000,"note":""},{"name":"PDT 250ML","unit":"UNI","qty":1,"price":14500,"note":"compra irregular"},{"name":"PDT 500ML","unit":"UNI","qty":1,"price":28500,"note":"compra irregular"},{"name":"PEPSI 250ML","unit":"UNI","qty":1,"price":14500,"note":"compra irregular"},{"name":"PEPSI 500ML","unit":"UNI","qty":1,"price":28500,"note":"compra irregular"},{"name":"PULP 250ML","unit":"UNI","qty":1,"price":14500,"note":"compra irregular"},{"name":"POLVO DE NARANJA","unit":"UNI","qty":3,"price":8800,"note":""},{"name":"ACEITE DE OLIVA 1L","unit":"BOT","qty":0,"price":100000,"note":"cada 3 semanas"},{"name":"AZUCAR","unit":"kg","qty":1,"price":28000,"note":""},{"name":"EDULCORANTE","unit":"UNI","qty":3,"price":18500,"note":""},{"name":"KETCHUP","unit":"UNI","qty":0,"price":60000,"note":"cada 2 semanas"},{"name":"MAYONESA","unit":"UNI","qty":0,"price":43000,"note":"cada 2 semanas"},{"name":"SAL FINA / GRUESO","unit":"UNI","qty":1,"price":29000,"note":"cada 2 semanas"},{"name":"SALSA DE SOJA","unit":"BOT","qty":2,"price":29000,"note":""},{"name":"VINAGRON 5L","unit":"BID","qty":1,"price":23500,"note":""},{"name":"CORONA","unit":"CAJA","qty":1,"price":162000,"note":"compra irregular"},{"name":"HEINEKEN","unit":"CAJA","qty":1,"price":155000,"note":"compra irregular"},{"name":"AYUDIN 5L","unit":"BID","qty":1,"price":25000,"note":"compra irregular"},{"name":"BOLSA DE BASURA 150L","unit":"UNI","qty":2,"price":9500,"note":""},{"name":"BOLSA DE BASURA 60L","unit":"UNI","qty":1,"price":6500,"note":""},{"name":"DETERGENTE","unit":"UNI","qty":3,"price":9500,"note":""},{"name":"ESPONJA","unit":"UNI","qty":3,"price":3000,"note":""},{"name":"GUANTE G","unit":"UNI","qty":1,"price":8500,"note":""},{"name":"JABON","unit":"UNI","qty":1,"price":6000,"note":""}],"VERDURAS EMA":[{"name":"NARANJA","unit":"x10mil","qty":1,"price":10000,"note":""},{"name":"BATATA","unit":"kg","qty":3,"price":5000,"note":""},{"name":"CEBOLITA","unit":"DOC","qty":3,"price":15000,"note":"cantidad variable"},{"name":"CEBOLLA","unit":"CAJA","qty":0,"price":80000,"note":""},{"name":"CEBOLLA M","unit":"kg","qty":0,"price":12000,"note":""},{"name":"JENGIBRE","unit":"x10mil","qty":0,"price":10000,"note":"compra irregular"},{"name":"LECHUGA","unit":"UNI","qty":5,"price":20000,"note":"cantidad variable"},{"name":"LOCOTE ROJO","unit":"kg","qty":1,"price":20000,"note":""},{"name":"LOCOTE VERDE","unit":"kg","qty":1,"price":15000,"note":""},{"name":"PAPITA","unit":"BOLSA","qty":1,"price":180000,"note":""},{"name":"PEPINO","unit":"CAJA","qty":1,"price":200000,"note":"cada 2~3 semanas"},{"name":"PEREJIL","unit":"DOC","qty":1,"price":10000,"note":""},{"name":"REPOLLO","unit":"CAJA","qty":1,"price":130000,"note":""},{"name":"TOMATE","unit":"kg","qty":3,"price":12000,"note":""},{"name":"ZANAHORIA","unit":"BOLSA","qty":1,"price":100000,"note":""},{"name":"ZUKINI","unit":"CAJA","qty":1,"price":100000,"note":"cada 2~3 semanas"}],"HANIL":[{"name":"HONDASHI","unit":"UNI","qty":1,"price":75000,"note":""}],"RUBEN":[{"name":"ACEITE PARA FRITURA","unit":"CAJA","qty":1,"price":270000,"note":""}],"ILMI":[{"name":"ALAMBRILLO","unit":"UNI","qty":1,"price":5000,"note":"compra irregular"},{"name":"ACEITE DE SESAMO","unit":"BOT","qty":1,"price":50000,"note":""},{"name":"SESAMO","unit":"PACK","qty":1,"price":20000,"note":"compra irregular"}],"MILU":[{"name":"BOLSA DE FIDEO","unit":"UNI","qty":1,"price":3000,"note":"compra irregular"},{"name":"BOLSA DE PAPEL","unit":"UNI","qty":1,"price":5000,"note":""},{"name":"BOLSA DE PRIMAVERA","unit":"UNI","qty":1,"price":6000,"note":"compra irregular"},{"name":"CARTON N2","unit":"UNI","qty":1,"price":11000,"note":"compra irregular"},{"name":"CARTON N3","unit":"UNI","qty":1,"price":16500,"note":"compra irregular"},{"name":"ISOPOR R8","unit":"UNI","qty":2,"price":137600,"note":"100 unidades"},{"name":"PLASTICO CUBIERTOS","unit":"UNI","qty":1,"price":6000,"note":"compra irregular"}],"SIBARITA":[{"name":"QUESO PARAGUAY","unit":"g","qty":300,"price":44000,"note":"compra irregular"},{"name":"ALMIDON","unit":"kg","qty":2,"price":6000,"note":""},{"name":"COMINO","unit":"g","qty":1,"price":10000,"note":"compra irregular"},{"name":"HARINA DE MAIZ","unit":"kg","qty":1,"price":10000,"note":"compra irregular"},{"name":"OREGANO","unit":"g","qty":100,"price":5000,"note":"compra irregular"},{"name":"PIMIENTA","unit":"g","qty":100,"price":4000,"note":"compra irregular"},{"name":"ROJO P. AGRIDULCE","unit":"UNI","qty":0,"price":18000,"note":"compra irregular"},{"name":"SODA GAUSTICA","unit":"UNI","qty":2,"price":12000,"note":""}],"CASA DEL QUESO":[{"name":"PAPA FRITA","unit":"2.5kg","qty":0,"price":42000,"note":"compra irregular"},{"name":"QUESO CHEDDAR","unit":"kg","qty":1,"price":160000,"note":""},{"name":"PAPEL FRITO","unit":"UNI","qty":1,"price":6000,"note":""}],"Bebidas":[{"name":"COCA CON CAFÉ","unit":"PACK","qty":1,"price":26000,"note":"pack de 6"},{"name":"COCA LATA","unit":"PACK","qty":1,"price":31000,"note":""},{"name":"COCA ZERO LATA","unit":"PACK","qty":1,"price":31000,"note":""},{"name":"FANTA MBRUCUYA","unit":"PACK","qty":1,"price":31000,"note":""},{"name":"FANTA NARANJA","unit":"PACK","qty":1,"price":31000,"note":""},{"name":"FANTA UVA","unit":"PACK","qty":1,"price":31000,"note":""},{"name":"GUARANA ANTARTICA","unit":"PACK","qty":1,"price":62000,"note":"pack de 12"},{"name":"GUARANA ANTARTICA ZERO","unit":"PACK","qty":1,"price":62000,"note":"pack de 12"},{"name":"MONSTER","unit":"PACK","qty":1,"price":72000,"note":"compra irregular"},{"name":"PEPSI","unit":"PACK","qty":1,"price":62000,"note":"pack de 12"},{"name":"PEPSI BLACK","unit":"PACK","qty":1,"price":62000,"note":"pack de 12"},{"name":"SPRITE","unit":"PACK","qty":1,"price":31000,"note":""}],"ORIENTAL":[{"name":"PALITOS","unit":"PACK","qty":4,"price":40000,"note":"compra irregular"},{"name":"ARROZ FORTUNA 30KG","unit":"UNI","qty":1,"price":430000,"note":"compra irregular"},{"name":"ACELGA","unit":"CAJA","qty":1,"price":100000,"note":"compra irregular"}]};
+
+// ════════════════════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════════════════════
+let master = {};
+let thisWeek = {};
+let history = [];
+
+function loadState() {
+  try {
+    const m = localStorage.getItem('mercadoMaster');
+    master = m ? JSON.parse(m) : JSON.parse(JSON.stringify(INITIAL_MASTER));
+    const h = localStorage.getItem('mercadoHistory');
+    history = h ? JSON.parse(h) : [];
+    if (master['음료']) { master['Bebidas'] = master['음료']; delete master['음료']; }
+  } catch(e) {
+    master = JSON.parse(JSON.stringify(INITIAL_MASTER));
+    history = [];
+  }
+  sortAllStores();
+  initThisWeek();
+  // ── 자동저장된 이번주 수량 복원 ──
+  try {
+    const sw = localStorage.getItem('mercadoThisWeek');
+    if (sw) {
+      const saved = JSON.parse(sw);
+      for (const store of STORES_ORDER) {
+        if (!saved[store] || !thisWeek[store]) continue;
+        saved[store].forEach((item, idx) => {
+          if (thisWeek[store][idx] && item.name === thisWeek[store][idx].name) {
+            thisWeek[store][idx].qty = item.qty;
+          }
+        });
+      }
+    }
+    const savedDate = localStorage.getItem('mercadoThisWeekDate');
+    if (savedDate) setTimeout(() => {
+      const el = document.getElementById('purchaseDate');
+      if (el) el.value = savedDate;
+    }, 0);
+  } catch(e) {}
+}
+
+function saveState() {
+  localStorage.setItem('mercadoMaster', JSON.stringify(master));
+  localStorage.setItem('mercadoHistory', JSON.stringify(history));
+}
+
+function saveThisWeek() {
+  localStorage.setItem('mercadoThisWeek', JSON.stringify(thisWeek));
+  const dateEl = document.getElementById('purchaseDate');
+  if (dateEl) localStorage.setItem('mercadoThisWeekDate', dateEl.value);
+  flashSaveBadge();
+}
+
+function initThisWeek() {
+  thisWeek = {};
+  for (const store of STORES_ORDER) {
+    if (!master[store]) continue;
+    thisWeek[store] = master[store].map(p => ({ name:p.name, unit:p.unit, qty:p.qty, price:p.price }));
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+//  NAV
+// ════════════════════════════════════════════════════════════
+function showPage(id, tabEl) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  if (tabEl) tabEl.classList.add('active');
+  document.getElementById('summaryBar').style.display = id === 'input' ? 'flex' : 'none';
+  if (id === 'history') renderHistory();
+  if (id === 'master') renderMaster();
+}
+
+// ════════════════════════════════════════════════════════════
+//  PAGE 1 — Lista Semanal
+// ════════════════════════════════════════════════════════════
+function isIrreg(note) {
+  return note && (note.includes('irregular') || note.includes('semanas') || note.includes('variable'));
+}
+
+function renderInput() {
+  const container = document.getElementById('storeBlocks');
+  container.innerHTML = '';
+  for (const store of STORES_ORDER) {
+    if (!thisWeek[store] || !thisWeek[store].length) continue;
+    const color = STORE_COLORS[store] || '#444';
+    const key = storeKey(store);
+    const storeSub = thisWeek[store].reduce((s,p)=>s+p.qty*p.price,0);
+    const block = document.createElement('div');
+    block.className = 'store-block';
+    block.innerHTML = `
+      <div class="store-hdr" style="background:${color}">
+        <span>${store}</span>
+        <span class="store-sub" id="sub-${key}">₲ ${fmt(storeSub)}</span>
+      </div>
+      <div class="store-rows" id="rows-${key}"></div>`;
+    container.appendChild(block);
+    renderStoreRows(store);
+  }
+  updateTotal();
+}
+
+function renderStoreRows(store) {
+  const key = storeKey(store);
+  const container = document.getElementById('rows-'+key);
+  if (!container) return;
+  container.innerHTML = '';
+  const items = thisWeek[store];
+  const masterItems = master[store] || [];
+  items.forEach((p, idx) => {
+    const mi = masterItems[idx] || {};
+    const irreg = isIrreg(mi.note || '');
+    const div = document.createElement('div');
+    div.className = 'item-row';
+    div.innerHTML = `
+      <div class="item-name">${p.name}${irreg ? '<span class="irreg">revisar</span>' : ''}</div>
+      <div class="item-unit">${p.unit}</div>
+      <div class="qty-wrap">
+        <button class="qty-btn" onclick="adjustQty('${store}',${idx},-1)">−</button>
+        <input class="qty-input ${p.qty !== mi.qty ? 'changed' : ''}" type="number" min="0" value="${p.qty}"
+               id="qty-${key}-${idx}" onchange="setQty('${store}',${idx},this.value)"
+               style="${irreg ? 'border-color:#F39C12' : ''}">
+        <button class="qty-btn" onclick="adjustQty('${store}',${idx},+1)">+</button>
+      </div>
+      <div class="item-sub" id="isub-${key}-${idx}">₲ ${fmt(p.qty*p.price)}</div>`;
+    container.appendChild(div);
+  });
+}
+
+function adjustQty(store, idx, delta) {
+  thisWeek[store][idx].qty = Math.max(0, (thisWeek[store][idx].qty||0) + delta);
+  updateRowUI(store, idx);
+  saveThisWeek();
+}
+function setQty(store, idx, val) {
+  thisWeek[store][idx].qty = Math.max(0, parseInt(val)||0);
+  updateRowUI(store, idx);
+  saveThisWeek();
+}
+function updateRowUI(store, idx) {
+  const key = storeKey(store);
+  const p = thisWeek[store][idx];
+  const mi = (master[store]||[])[idx] || {};
+  const inp = document.getElementById(`qty-${key}-${idx}`);
+  const sub = document.getElementById(`isub-${key}-${idx}`);
+  if (inp) { inp.value = p.qty; inp.className = 'qty-input ' + (p.qty !== mi.qty ? 'changed' : ''); }
+  if (sub) sub.textContent = '₲ ' + fmt(p.qty * p.price);
+  const storeSub = thisWeek[store].reduce((s,x)=>s+x.qty*x.price,0);
+  const subEl = document.getElementById('sub-'+key);
+  if (subEl) subEl.textContent = '₲ ' + fmt(storeSub);
+  updateTotal();
+}
+function updateTotal() {
+  let total = 0;
+  for (const store of STORES_ORDER) {
+    if (!thisWeek[store]) continue;
+    total += thisWeek[store].reduce((s,p)=>s+p.qty*p.price,0);
+  }
+  document.getElementById('summaryTotal').textContent = '₲ ' + fmt(total);
+}
+function flashSaveBadge() {
+  const el = document.getElementById('autosaveBadge');
+  if (!el) return;
+  const now = new Date();
+  el.textContent = '💾 guardado ' + now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+  el.style.color = 'var(--green)';
+  setTimeout(() => { el.style.color = 'var(--text3)'; }, 2000);
+}
+function resetQty() {
+  initThisWeek();
+  saveThisWeek();
+  renderInput();
+  showToast('Cantidades restauradas');
+}
+
+// ════════════════════════════════════════════════════════════
+//  COMPLETAR — 이력 저장 + 엑셀
+// ════════════════════════════════════════════════════════════
+function gatherWeek() {
+  const allItems = [];
+  const totals = {};
+  let total = 0;
+  for (const store of STORES_ORDER) {
+    if (!thisWeek[store]) continue;
+    for (const p of thisWeek[store]) {
+      if (p.qty > 0) {
+        allItems.push({ store, name: p.name, unit: p.unit, qty: p.qty, price: p.price });
+        const amt = p.qty * p.price;
+        const grp = STORE_GROUP[store] || 'Otros';
+        totals[grp] = (totals[grp]||0) + amt;
+        total += amt;
+      }
+    }
+  }
+  return { allItems, totals, total };
+}
+
+function completeWeek() {
+  const dateVal = document.getElementById('purchaseDate').value;
+  if (!dateVal) { showToast('⚠️ Ingrese la fecha primero'); return; }
+  const { allItems, totals, total } = gatherWeek();
+  if (!allItems.length) { showToast('⚠️ No hay productos con cantidad'); return; }
+
+  const exists = history.find(h => h.date === dateVal);
+  if (exists) {
+    showModal('Fecha ya registrada',
+      `<p style="color:var(--text2);font-size:14px;line-height:1.7">Ya existe un registro para ${dateVal}.<br>¿Desea sobrescribirlo?</p>`,
+      [
+        {label:'Cancelar', cls:'btn-outline', fn: closeModal},
+        {label:'Sobrescribir', cls:'btn-red', fn: ()=>{ history = history.filter(h=>h.date!==dateVal); doSave(dateVal,allItems,totals,total); closeModal(); }}
+      ]);
+    return;
+  }
+  doSave(dateVal, allItems, totals, total);
+}
+
+function doSave(dateVal, allItems, totals, total) {
+  history.unshift({ date: dateVal, items: allItems, totals, total });
+  saveState();
+  localStorage.removeItem('mercadoThisWeek');
+  localStorage.removeItem('mercadoThisWeekDate');
+  generateExcel(dateVal, allItems, total);
+  showToast('✅ Guardado. Descargando Excel...');
+  initThisWeek();
+  renderInput();
+}
+
+// ════════════════════════════════════════════════════════════
+//  EXCEL — A4 가로 한 장, 3컬럼, 체크박스 앞뒤
+// ════════════════════════════════════════════════════════════
+function buildColumns(allItems) {
+  // 거래처별 블록 생성
+  const blocks = [];
+  let num = 0;
+  let curStore = '';
+  let curBlock = null;
+  for (const it of allItems) {
+    if (it.store !== curStore) {
+      if (curBlock) blocks.push(curBlock);
+      curBlock = { store: it.store, items: [] };
+      curStore = it.store;
+    }
+    num++;
+    curBlock.items.push({ num, name: it.name, qtyStr: `${it.qty} ${it.unit}` });
+  }
+  if (curBlock) blocks.push(curBlock);
+
+  // Masonry: 3컬럼 greedy — 항상 가장 짧은 컬럼에 블록 배치
+  const NUM_COLS = 3;
+  const cols = Array.from({length: NUM_COLS}, () => ({ height: 0, blocks: [] }));
+  for (const block of blocks) {
+    const blockH = 1 + block.items.length;
+    let minIdx = 0;
+    for (let i = 1; i < NUM_COLS; i++) {
+      if (cols[i].height < cols[minIdx].height) minIdx = i;
+    }
+    cols[minIdx].blocks.push(block);
+    cols[minIdx].height += blockH + 0.5;
+  }
+  return cols.map(c => c.blocks);
+}
+
+function generateExcel(dateVal, allItems, total) {
+  const wb = XLSX.utils.book_new();
+  const cols = buildColumns(allItems); // cols[i] = [{store, items:[{num,name,qtyStr}]}]
+
+  // 각 컬럼을 행 배열로 평탄화
+  const flatCols = cols.map(colBlocks => {
+    const rows = [];
+    for (const block of colBlocks) {
+      rows.push({ type:'hdr', store: block.store });
+      for (const it of block.items) rows.push({ type:'item', ...it });
+    }
+    return rows;
+  });
+
+  const maxLen = Math.max(...flatCols.map(c=>c.length));
+  const data = [];
+  data.push([`LISTA DE COMPRAS   ${dateVal}`,'','','','','','','','','','','','','','',`TOTAL: ${fmt(total)} Gs.`,'']);
+  data.push(['☐=comprado','','','','☐=recibido','','','','','','','','','','','','']);
+  data.push([]);
+
+  for (let r = 0; r < maxLen; r++) {
+    const row = [];
+    for (let c = 0; c < 3; c++) {
+      const ln = flatCols[c] ? flatCols[c][r] : null;
+      if (!ln) { row.push('','','','',''); }
+      else if (ln.type === 'hdr') { row.push('','','▶ '+ln.store,'',''); }
+      else { row.push('☐', ln.num, ln.name, ln.qtyStr, '☐'); }
+      if (c < 2) row.push('');
+    }
+    data.push(row);
+  }
+
+  const ws = XLSX.utils.aoa_to_sheet(data);
+  ws['!cols'] = [
+    {wch:3},{wch:3},{wch:23},{wch:9},{wch:3},
+    {wch:1.5},
+    {wch:3},{wch:3},{wch:23},{wch:9},{wch:3},
+    {wch:1.5},
+    {wch:3},{wch:3},{wch:23},{wch:9},{wch:3},
+  ];
+  ws['!pageSetup'] = { orientation: 'landscape', paperSize: 9, fitToPage: true, fitToWidth: 1, fitToHeight: 1 };
+  ws['!margins'] = { left:0.3, right:0.3, top:0.4, bottom:0.4, header:0.2, footer:0.2 };
+  XLSX.utils.book_append_sheet(wb, ws, 'Lista de Compras');
+  XLSX.writeFile(wb, `lista_compras_${dateVal.replace(/-/g,'')}.xlsx`);
+}
+
+// ════════════════════════════════════════════════════════════
+//  IMPRIMIR — 브라우저 인쇄 (A4 가로 완벽 맞춤)
+// ════════════════════════════════════════════════════════════
+function printList() {
+  const dateVal = document.getElementById('purchaseDate').value || '';
+  const { allItems, total } = gatherWeek();
+  if (!allItems.length) { showToast('⚠️ No hay productos con cantidad'); return; }
+
+  const cols = buildColumns(allItems);  // cols[i] = [{store, items:[{num,name,qtyStr}]}]
+
+  let colsHtml = '';
+  for (const colBlocks of cols) {
+    let colHtml = '<div class="print-col">';
+    for (const block of colBlocks) {
+      const color = STORE_COLORS[block.store] || '#444';
+      let itemsHtml = '';
+      for (const it of block.items) {
+        itemsHtml += `<div class="print-item">
+          <span class="print-chk"></span>
+          <span class="print-num">${it.num}</span>
+          <span class="print-pname">${it.name}</span>
+          <span class="print-pqty">${it.qtyStr}</span>
+          <span class="print-chk"></span>
+        </div>`;
+      }
+      colHtml += `<div class="print-store-block">
+        <div class="print-store-hdr" style="background:${color}">▶ ${block.store}</div>
+        ${itemsHtml}
+      </div>`;
+    }
+    colHtml += '</div>';
+    colsHtml += colHtml;
+  }
+
+  document.getElementById('printArea').innerHTML = `
+    <div class="print-sheet">
+      <div class="print-title">
+        <span>LISTA DE COMPRAS &nbsp; ${dateVal}</span>
+        <span class="print-total">TOTAL: ₲ ${fmt(total)}</span>
+      </div>
+      <div class="print-legend">
+        <span>☐ izquierda = comprado</span>
+        <span>☐ derecha = recibido / verificado</span>
+      </div>
+      <div class="print-cols">${colsHtml}</div>
+      <div class="print-foot">
+        <span>Comprador: ___________________</span>
+        <span>Receptor: ___________________</span>
+        <span>Fecha de recepción: ____ / ____ / ______</span>
+      </div>
+    </div>`;
+  window.print();
+}
+
+// ════════════════════════════════════════════════════════════
+//  PAGE 2 — Historial
+// ════════════════════════════════════════════════════════════
+function renderHistory() {
+  renderStats();
+  renderWeeklyChart();
+  renderWeeklyHistTable();
+  renderPriceHistory();
+}
+
+function renderStats() {
+  const grid = document.getElementById('statsGrid');
+  if (!history.length) { grid.innerHTML = ''; return; }
+  const totals = history.map(h=>h.total);
+  const avg = Math.round(totals.reduce((a,b)=>a+b,0)/totals.length);
+  const max = Math.max(...totals);
+  const min = Math.min(...totals);
+  grid.innerHTML = `
+    <div class="stat-card"><div class="stat-label">Compras registradas</div><div class="stat-value">${history.length}</div><div class="stat-sub">total</div></div>
+    <div class="stat-card"><div class="stat-label">Promedio semanal</div><div class="stat-value">₲${fmtK(avg)}</div></div>
+    <div class="stat-card"><div class="stat-label">Semana más alta</div><div class="stat-value">₲${fmtK(max)}</div><div class="stat-sub">${history.find(h=>h.total===max)?.date||''}</div></div>
+    <div class="stat-card"><div class="stat-label">Semana más baja</div><div class="stat-value">₲${fmtK(min)}</div><div class="stat-sub">${history.find(h=>h.total===min)?.date||''}</div></div>`;
+}
+
+function renderWeeklyChart() {
+  const el = document.getElementById('weeklyChart');
+  if (!history.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">📊</div><div class="empty-text">Sin datos todavía</div></div>'; return; }
+  const recent = [...history].reverse().slice(-10);
+  const maxVal = Math.max(...recent.map(h=>h.total));
+  let html = '';
+  for (const h of recent) {
+    const pct = Math.max(12, Math.round((h.total/maxVal)*100));
+    html += `<div class="bar-row"><div class="bar-label">${h.date}</div><div class="bar-track"><div class="bar-fill" style="width:${pct}%"><span class="bar-val">₲${fmtK(h.total)}</span></div></div></div>`;
+  }
+  el.innerHTML = html;
+}
+
+function renderWeeklyHistTable() {
+  const tbody = document.getElementById('weeklyHistBody');
+  if (!history.length) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--text3)">Sin registros. Use "Completar" en la Lista Semanal.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = history.map((h,i) => `
+    <tr>
+      <td><strong>${h.date}</strong></td>
+      <td>₲ ${fmt(h.totals['MEGA']||0)}</td>
+      <td>₲ ${fmt(h.totals['Verduras']||h.totals['야채/식재']||0)}</td>
+      <td>₲ ${fmt(h.totals['Embalaje/Bebidas']||h.totals['포장/음료']||0)}</td>
+      <td>₲ ${fmt(h.totals['Otros']||h.totals['기타']||0)}</td>
+      <td class="week-total">₲ ${fmt(h.total)}</td>
+      <td><button class="btn btn-outline btn-sm" style="color:var(--red)" onclick="deleteHistory(${i})">Eliminar</button></td>
+    </tr>`).join('');
+}
+
+function deleteHistory(idx) {
+  showModal('Eliminar registro',
+    `<p style="color:var(--text2);font-size:14px">¿Eliminar el registro del ${history[idx].date}?</p>`,
+    [
+      {label:'Cancelar', cls:'btn-outline', fn: closeModal},
+      {label:'Eliminar', cls:'btn-red', fn: ()=>{ history.splice(idx,1); saveState(); renderHistory(); closeModal(); showToast('Eliminado'); }}
+    ]);
+}
+
+function renderPriceHistory() {
+  const q = (document.getElementById('priceSearchInput')?.value || '').toLowerCase();
+  const tbody = document.getElementById('priceHistBody');
+  if (!history.length) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text3)">Sin datos</td></tr>'; return; }
+
+  const itemMap = {};
+  for (const h of [...history].reverse()) {
+    for (const it of h.items) {
+      const key = it.store + '|' + it.name;
+      if (!itemMap[key]) itemMap[key] = { store: it.store, name: it.name, prices: [] };
+      itemMap[key].prices.push(it.price);
+    }
+  }
+  let rows = Object.values(itemMap);
+  if (q) rows = rows.filter(r => r.name.toLowerCase().includes(q) || r.store.toLowerCase().includes(q));
+  rows.sort((a,b) => a.store.localeCompare(b.store) || a.name.localeCompare(b.name));
+
+  tbody.innerHTML = rows.map(r => {
+    const prices = r.prices;
+    const latest = prices[prices.length-1];
+    const prev = prices.length > 1 ? prices[prices.length-2] : null;
+    const diff = prev !== null ? latest - prev : 0;
+    const diffHtml = prev !== null
+      ? (diff === 0 ? '<span class="price-same">=</span>'
+        : `<span class="${diff>0?'price-up':'price-down'}">${diff>0?'▲':'▼'} ₲${fmt(Math.abs(diff))}</span>`)
+      : '<span class="price-same">—</span>';
+    return `<tr>
+      <td><strong>${r.name}</strong></td>
+      <td style="color:${STORE_COLORS[r.store]||'#444'};font-weight:600;font-size:12px">${r.store}</td>
+      <td>₲ ${fmt(latest)}</td>
+      <td>${diffHtml}</td>
+      <td>₲ ${fmt(Math.min(...prices))}</td>
+      <td>₲ ${fmt(Math.max(...prices))}</td>
+      <td>${prices.length}</td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text3)">Sin resultados</td></tr>';
+}
+
+function exportHistoryExcel() {
+  if (!history.length) { showToast('Sin datos para exportar'); return; }
+  const wb = XLSX.utils.book_new();
+  const sum = [['Fecha','MEGA','Verduras','Embalaje/Bebidas','Otros','Total']];
+  for (const h of [...history].reverse()) {
+    sum.push([h.date, h.totals['MEGA']||0, h.totals['Verduras']||h.totals['야채/식재']||0,
+              h.totals['Embalaje/Bebidas']||h.totals['포장/음료']||0, h.totals['Otros']||h.totals['기타']||0, h.total]);
+  }
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(sum), 'Resumen semanal');
+
+  const detail = [['Fecha','Proveedor','Producto','Unidad','Cantidad','Precio','Subtotal']];
+  for (const h of [...history].reverse()) {
+    for (const it of h.items) detail.push([h.date, it.store, it.name, it.unit, it.qty, it.price, it.qty*it.price]);
+  }
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(detail), 'Detalle por producto');
+  XLSX.writeFile(wb, `historial_compras_${today()}.xlsx`);
+}
+
+// ════════════════════════════════════════════════════════════
+//  PAGE 3 — Productos (개선된 관리)
+// ════════════════════════════════════════════════════════════
+function renderMaster() {
+  const q = (document.getElementById('prodSearch')?.value || '').toLowerCase();
+  const container = document.getElementById('masterContent');
+  container.innerHTML = '';
+  for (const store of STORES_ORDER) {
+    if (!master[store]) continue;
+    let items = master[store].map((p,i)=>({...p, _idx:i}));
+    if (q) items = items.filter(p => p.name.toLowerCase().includes(q));
+    if (q && !items.length) continue;
+    const color = STORE_COLORS[store];
+    const div = document.createElement('div');
+    div.className = 'card';
+    div.innerHTML = `
+      <div class="card-head" style="background:${color};border-bottom:none">
+        <div class="card-title" style="color:white">${store} <span style="opacity:0.7;font-weight:400">(${master[store].length})</span></div>
+        <button class="btn btn-ghost btn-sm" onclick="openAddModal('${store}')">＋ Agregar</button>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="master-table">
+          <thead><tr><th style="width:30%">Producto</th><th>Unidad</th><th>Cant. habitual</th><th>Precio (₲)</th><th>Nota</th><th style="width:140px"></th></tr></thead>
+          <tbody>
+            ${items.map(p => `
+              <tr>
+                <td><strong>${p.name}</strong></td>
+                <td>${p.unit}</td>
+                <td>${p.qty}</td>
+                <td>₲ ${fmt(p.price)}</td>
+                <td style="font-size:12px;color:var(--text3)">${p.note||''}</td>
+                <td>
+                  <div class="prod-row-actions">
+                    <button class="icon-btn" title="Subir" ${p._idx===0?'disabled':''} onclick="moveItem('${store}',${p._idx},-1)">↑</button>
+                    <button class="icon-btn" title="Bajar" ${p._idx===items[items.length-1]._idx?'disabled':''} onclick="moveItem('${store}',${p._idx},+1)">↓</button>
+                    <button class="icon-btn" title="Editar" onclick="openEditModal('${store}',${p._idx})">✏️</button>
+                    <button class="icon-btn del" title="Eliminar" onclick="confirmDelete('${store}',${p._idx})">🗑</button>
+                  </div>
+                </td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>`;
+    container.appendChild(div);
+  }
+  if (!container.innerHTML) {
+    container.innerHTML = '<div class="empty"><div class="empty-icon">🔍</div><div class="empty-text">Sin resultados</div></div>';
+  }
+}
+
+function productForm(p = {}, fixedStore = null) {
+  const storeOptions = STORES_ORDER.map(s =>
+    `<option value="${s}" ${s===(fixedStore||p._store)?'selected':''}>${s}</option>`).join('');
+  return `
+    <div class="form-group">
+      <label>Proveedor</label>
+      <select class="form-select" id="f-store" ${fixedStore?'disabled':''}>${storeOptions}</select>
+    </div>
+    <div class="form-group">
+      <label>Nombre del producto</label>
+      <input class="form-input" id="f-name" value="${p.name||''}" placeholder="Ej: TOMATE">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Unidad</label>
+        <input class="form-input" id="f-unit" value="${p.unit||'UNI'}" placeholder="kg / CAJA / UNI">
+      </div>
+      <div class="form-group">
+        <label>Cantidad habitual</label>
+        <input class="form-input" id="f-qty" type="number" min="0" value="${p.qty??1}">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Precio (₲)</label>
+      <input class="form-input" id="f-price" type="number" min="0" value="${p.price||0}">
+    </div>
+    <div class="form-group">
+      <label>Nota (opcional)</label>
+      <input class="form-input" id="f-note" value="${p.note||''}" placeholder="Ej: compra irregular">
+    </div>`;
+}
+
+function openAddModal(store = null) {
+  showModal('Agregar producto', productForm({}, store), [
+    {label:'Cancelar', cls:'btn-outline', fn: closeModal},
+    {label:'Agregar', cls:'btn-green', fn: () => {
+      const s = store || document.getElementById('f-store').value;
+      const name = document.getElementById('f-name').value.trim();
+      if (!name) { showToast('⚠️ Ingrese el nombre'); return; }
+      master[s] = master[s] || [];
+      master[s].push({
+        name,
+        unit: document.getElementById('f-unit').value.trim() || 'UNI',
+        qty: parseInt(document.getElementById('f-qty').value)||0,
+        price: parseInt(document.getElementById('f-price').value)||0,
+        note: document.getElementById('f-note').value.trim()
+      });
+      sortStore(s);
+      saveState();
+      initThisWeek();
+      renderMaster();
+      renderInput();
+      closeModal();
+      showToast('✅ Producto agregado');
+    }}
+  ]);
+}
+
+function openEditModal(store, idx) {
+  const p = master[store][idx];
+  showModal('Editar producto', productForm({...p, _store: store}, store), [
+    {label:'Cancelar', cls:'btn-outline', fn: closeModal},
+    {label:'Guardar', cls:'btn-green', fn: () => {
+      const name = document.getElementById('f-name').value.trim();
+      if (!name) { showToast('⚠️ Ingrese el nombre'); return; }
+      master[store][idx] = {
+        name,
+        unit: document.getElementById('f-unit').value.trim() || 'UNI',
+        qty: parseInt(document.getElementById('f-qty').value)||0,
+        price: parseInt(document.getElementById('f-price').value)||0,
+        note: document.getElementById('f-note').value.trim()
+      };
+      sortStore(store);
+      saveState();
+      initThisWeek();
+      renderMaster();
+      renderInput();
+      closeModal();
+      showToast('✅ Guardado');
+    }}
+  ]);
+}
+
+function confirmDelete(store, idx) {
+  const p = master[store][idx];
+  showModal('Eliminar producto',
+    `<p style="color:var(--text2);font-size:14px">¿Eliminar <strong>"${p.name}"</strong> de ${store}?</p>`,
+    [
+      {label:'Cancelar', cls:'btn-outline', fn: closeModal},
+      {label:'Eliminar', cls:'btn-red', fn: () => {
+        master[store].splice(idx,1);
+        saveState();
+        initThisWeek();
+        renderMaster();
+        renderInput();
+        closeModal();
+        showToast('Eliminado');
+      }}
+    ]);
+}
+
+// ── A→Z 정렬 ──
+function sortStore(store) {
+  if (master[store]) master[store].sort((a, b) => a.name.localeCompare(b.name));
+}
+function sortAllStores() {
+  for (const store of STORES_ORDER) sortStore(store);
+}
+
+// ── 순서 이동 (↑↓) ──
+function moveItem(store, idx, dir) {
+  const arr = master[store];
+  const newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= arr.length) return;
+  [arr[idx], arr[newIdx]] = [arr[newIdx], arr[idx]];
+  saveState();
+  initThisWeek();
+  renderMaster();
+  showToast(dir < 0 ? '↑ Movido arriba' : '↓ Movido abajo');
+}
+
+function exportMasterExcel() {
+  const wb = XLSX.utils.book_new();
+  const data = [['Proveedor','Producto','Unidad','Cant. habitual','Precio','Nota']];
+  for (const store of STORES_ORDER) {
+    if (!master[store]) continue;
+    for (const p of master[store]) data.push([store, p.name, p.unit, p.qty, p.price, p.note||'']);
+  }
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(data), 'Productos');
+  XLSX.writeFile(wb, `productos_${today()}.xlsx`);
+}
+
+// ════════════════════════════════════════════════════════════
+//  MODAL & TOAST & UTILS
+// ════════════════════════════════════════════════════════════
+function showModal(title, body, actions) {
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalBody').innerHTML = body;
+  const ac = document.getElementById('modalActions');
+  ac.innerHTML = '';
+  actions.forEach(a => {
+    const btn = document.createElement('button');
+    btn.className = 'btn ' + a.cls;
+    btn.textContent = a.label;
+    btn.onclick = a.fn;
+    ac.appendChild(btn);
+  });
+  document.getElementById('modal').classList.add('open');
+}
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+function storeKey(s) { return s.replace(/[\s]/g,'_'); }
+function fmt(n) { return Number(n||0).toLocaleString('es-PY'); }
+function fmtK(n) { return n>=1000000 ? (n/1000000).toFixed(1)+'M' : n>=1000 ? Math.round(n/1000)+'K' : String(n); }
+function today() { return new Date().toISOString().slice(0,10).replace(/-/g,''); }
+
+// ════════════════════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════════════════════
+function init() {
+  loadState();
+
+    // 새 품목 추가 (2026-06-11 업데이트)
+    const newItems = {
+      'MEGA': [
+        {name:'UVITA', unit:'UNI', qty:1, price:0, note:''},
+        {name:'SIKA SALSA PICANTE', unit:'UNI', qty:1, price:0, note:''},
+        {name:'MOSTAZA', unit:'UNI', qty:1, price:0, note:''},
+      ],
+      'MILU': [
+        {name:'PLASTICO CUCHILLO', unit:'UNI', qty:2, price:0, note:'compra irregular'},
+        {name:'PLASTICO TENEDOR', unit:'UNI', qty:1, price:0, note:'compra irregular'},
+      ],
+    };
+    for (const [store, items] of Object.entries(newItems)) {
+      if (!master[store]) master[store] = [];
+      for (const ni of items) {
+        if (!master[store].find(p => p.name === ni.name)) {
+          master[store].push(ni);
+        }
+      }
+    }
+    saveState();
+  // 초기 날짜: localStorage에 없으면 다음 목요일
+  const savedDate = localStorage.getItem('mercadoThisWeekDate');
+  if (!savedDate) {
+    const d = new Date();
+    const diff = (4 - d.getDay() + 7) % 7 || 7;
+    d.setDate(d.getDate() + diff);
+    document.getElementById('purchaseDate').value = d.toISOString().slice(0,10);
+  }
+  renderInput();
+  document.getElementById('modal').addEventListener('click', e => { if(e.target===e.currentTarget) closeModal(); });
+}
+init();
+</script>
+
+<!-- iOS 홈화면 추가 안내 -->
+<div id="installBanner" style="display:none;position:fixed;bottom:0;left:0;right:0;background:#1F4E79;color:white;padding:14px 20px 20px;z-index:999;box-shadow:0 -4px 20px rgba(0,0,0,0.3);text-align:center">
+  <div style="font-size:13px;font-weight:700;margin-bottom:6px">📲 홈화면에 추가하면 앱처럼 사용할 수 있어요</div>
+  <div style="font-size:12px;opacity:0.85;margin-bottom:12px">Safari 하단 <strong>공유 버튼 → 홈 화면에 추가</strong></div>
+  <button onclick="document.getElementById('installBanner').style.display='none';localStorage.setItem('installDismissed','1')"
+    style="background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.4);color:white;padding:7px 20px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer">
+    닫기
+  </button>
+</div>
+<script>
+// iOS Safari에서만, 홈화면 앱이 아닐 때, 한 번만 표시
+(function() {
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isSafari = /safari/i.test(navigator.userAgent) && !/chrome/i.test(navigator.userAgent);
+  const isStandalone = window.navigator.standalone === true;
+  const dismissed = localStorage.getItem('installDismissed');
+  if (isIOS && isSafari && !isStandalone && !dismissed) {
+    setTimeout(() => {
+      document.getElementById('installBanner').style.display = 'block';
+    }, 1500);
+  }
+})();
+</script>
+</body>
+</html>

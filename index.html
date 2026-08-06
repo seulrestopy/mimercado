@@ -55,11 +55,34 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg); color:
 .store-hdr { display: flex; align-items: center; justify-content: space-between; padding: 9px 14px; border-radius: 8px 8px 0 0; color: white; font-size: 13px; font-weight: 700; }
 .store-hdr .store-sub { font-size: 12px; font-weight: 600; opacity: 0.9; }
 .store-rows { border: 1px solid var(--border); border-top: none; border-radius: 0 0 8px 8px; overflow: hidden; }
-.item-row { display: grid; grid-template-columns: 1fr 70px 130px 100px; align-items: center; padding: 8px 14px; border-bottom: 1px solid #F0F4F8; transition: background .1s; }
+.item-row { display: grid; grid-template-columns: 1fr 72px 130px 92px; align-items: center; padding: 8px 14px; border-bottom: 1px solid #F0F4F8; transition: background .1s; }
 .item-row:last-child { border-bottom: none; }
 .item-row:hover { background: #F7FAFD; }
 .item-name { font-size: 13px; font-weight: 500; }
-.item-unit { font-size: 11px; color: var(--text3); text-align: center; }
+/* 단위 인라인 편집 */
+.unit-input { width: 66px; text-align: center; border: 1.5px solid transparent; border-radius: 6px;
+              padding: 4px 2px; font-size: 12px; color: var(--text2); background: transparent;
+              font-family: inherit; outline: none; transition: all .15s; }
+.unit-input:hover { border-color: var(--border); background: #fff; }
+.unit-input:focus { border-color: var(--primary-light); background: #fff; color: var(--text); }
+.unit-input.changed { border-color: var(--accent); color: var(--accent); background: #FEF6EE; font-weight: 700; }
+/* 결제방식 토글 */
+.pay-toggle { border: 1px solid rgba(255,255,255,0.45); background: rgba(255,255,255,0.14); color: #fff;
+              font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 14px; cursor: pointer;
+              font-family: inherit; white-space: nowrap; transition: all .15s; }
+.pay-toggle:hover { background: rgba(255,255,255,0.3); }
+.pay-toggle.is-pagado { background: #F5C842; color: #1A2535; border-color: #F5C842; }
+/* 임시 항목 */
+.temp-add-btn { border: 1px dashed rgba(255,255,255,0.5); background: transparent; color: #fff;
+                font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 14px; cursor: pointer;
+                font-family: inherit; white-space: nowrap; }
+.temp-add-btn:hover { background: rgba(255,255,255,0.2); }
+.item-row.is-temp { background: #FFFDF3; }
+.temp-tag { font-size: 10px; font-weight: 700; color: #B7770D; background: #FEF9E7;
+            border: 1px solid #FDEBD0; padding: 1px 6px; border-radius: 10px; margin-left: 6px; }
+.temp-del { border: 1.5px solid var(--border); background: #fff; color: var(--red); border-radius: 6px;
+            width: 26px; height: 26px; cursor: pointer; font-size: 13px; font-weight: 700; }
+.temp-del:hover { border-color: var(--red); background: #FDF0EF; }
 .qty-wrap { display: flex; align-items: center; justify-content: center; gap: 6px; }
 .qty-btn { width: 26px; height: 26px; border: 1.5px solid var(--border); background: var(--surface2); border-radius: 6px; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text2); transition: all .15s; line-height: 1; }
 .qty-btn:hover { border-color: var(--primary-light); color: var(--primary); background: #EEF4FB; }
@@ -154,25 +177,28 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg); color:
   #printArea { display: block !important; position: absolute; left: 0; top: 0; width: 100%; }
   @page { size: A4 landscape; margin: 8mm 10mm; }
 }
-.print-sheet { font-family: Arial, sans-serif; color: #000; background: white; padding: 0; }
-.print-title { font-size: 16px; font-weight: 800; padding: 4px 0 2px; border-bottom: 2.5px solid #1F4E79; margin-bottom: 2px; display: flex; justify-content: space-between; align-items: baseline; }
-.print-total { font-size: 12px; font-weight: 700; color: #1F4E79; }
-.print-legend { font-size: 8.5px; color: #555; margin-bottom: 6px; display: flex; gap: 16px; }
-.print-cols { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0 14px; align-items: start; }
-.print-col { display: flex; flex-direction: column; gap: 0; }
-.print-store-block { margin-bottom: 6px; break-inside: avoid; }
-.print-store-hdr { font-size: 10px; font-weight: 800; color: white; padding: 2.5px 7px; margin: 5px 0 2px; border-radius: 3px; }
-.print-item { display: grid; grid-template-columns: 13px 16px 1fr 52px 13px; align-items: center; gap: 4px; padding: 1.5px 0; font-size: 9.5px; border-bottom: 0.5px dotted #ccc; }
-.print-chk { width: 11px; height: 11px; border: 1.2px solid #444; border-radius: 2px; display: inline-block; }
-.print-num { color: #888; font-size: 8.5px; text-align: right; }
-.print-pname { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.print-pqty { text-align: right; font-size: 9px; color: #333; white-space: nowrap; }
-.print-foot { margin-top: 8px; font-size: 8.5px; color: #666; display: flex; justify-content: space-between; border-top: 1px solid #999; padding-top: 4px; }
+.print-sheet { font-family: Calibri, Arial, sans-serif; color: #000; background: white; padding: 0; }
+.print-title { font-size: 15px; font-weight: 700; text-align: center; padding: 2px 0 8px; }
+.print-cols { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0 12px; align-items: start; }
+.print-col { display: flex; flex-direction: column; }
+.print-store-block { margin-bottom: 4px; break-inside: avoid; }
+.print-store-hdr { font-size: 11.5px; font-weight: 700; background: #E8E8E8; padding: 2px 6px; margin: 4px 0 1px;
+                   display: flex; justify-content: space-between; align-items: center; }
+.print-pagado { font-size: 9px; font-weight: 800; letter-spacing: 0.5px; border: 1px solid #444; padding: 0 4px; }
+.print-item { display: grid; grid-template-columns: 1fr auto 15px; align-items: baseline; gap: 4px;
+              padding: 1.5px 6px; font-size: 11.5px; }
+.print-pname { white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+               border-bottom: 0.7px dotted #9a9a9a; }
+.print-pqty { text-align: right; white-space: nowrap; font-weight: 600;
+              border-bottom: 0.7px dotted #9a9a9a; padding-left: 6px; }
+.print-chk { text-align: center; font-size: 14px; line-height: 1; }
+.print-chk::before { content: '\2610'; }
 
 @media (max-width: 640px) {
   .nav-tab { padding: 16px 12px; font-size: 12px; }
   .page { padding: 16px 14px; }
-  .item-row { grid-template-columns: 1fr 55px 110px; }
+  .item-row { grid-template-columns: 1fr 62px 118px; }
+  .store-hdr { flex-wrap: wrap; gap: 6px; }
   .item-sub { display: none; }
   .form-row { grid-template-columns: 1fr; }
 }
@@ -186,26 +212,6 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg); color:
 }
 </style>
 
-<script>
-// 오늘(2026-06-11) 데이터 초기 주입 — 최초 실행 시 1회
-(function() {
-  const key = 'mercadoThisWeek';
-  const dateKey = 'mercadoThisWeekDate';
-  const initKey = 'mercadoInitDone_20260611';
-  if (localStorage.getItem(initKey)) return;  // 이미 주입됨
-  const todayData = {"MEGA": {"ARROZ COMUN 30KG": 0, "FIDEO DE SPAGETTI": 3, "DESODORANTE": 0, "LECHE CONDENSADA": 2, "PDT 250ML": 0, "PDT 500ML": 0, "PEPSI 250ML": 0, "PEPSI 500ML": 0, "PULP 250ML": 0, "POLVO DE NARANJA": 0, "ACEITE DE OLIVA 1L": 0, "AZUCAR": 2, "EDULCORANTE": 1, "KETCHUP": 1, "MAYONESA": 0, "SAL FINA / GRUESO": 0, "SALSA DE SOJA": 3, "VINAGRON 5L": 1, "CORONA": 0, "HEINEKEN": 0, "AYUDIN 5L": 1, "BOLSA DE BASURA 150L": 1, "BOLSA DE BASURA 60L": 0, "DETERGENTE": 2, "ESPONJA": 2, "GUANTE G": 1, "JABON": 1, "UVITA": 1, "SIKA SALSA PICANTE": 1, "MOSTAZA": 1}, "VERDURAS EMA": {"NARANJA": 0, "BATATA": 2, "CEBOLITA": 4, "CEBOLLA": 0, "CEBOLLA M": 0, "JENGIBRE": 0, "LECHUGA": 0, "LOCOTE ROJO": 1, "LOCOTE VERDE": 1, "PAPITA": 1, "PEPINO": 1, "PEREJIL": 1, "REPOLLO": 1, "TOMATE": 5, "ZANAHORIA": 1, "ZUKINI": 0}, "HANIL": {"HONDASHI": 0}, "RUBEN": {"ACEITE PARA FRITURA": 0}, "ILMI": {"ALAMBRILLO": 1, "ACEITE DE SESAMO": 1, "SESAMO": 0}, "MILU": {"BOLSA DE FIDEO": 0, "BOLSA DE PAPEL": 0, "BOLSA DE PRIMAVERA": 0, "CARTON N2": 2, "CARTON N3": 0, "ISOPOR R8": 0, "PLASTICO CUBIERTOS": 0, "PLASTICO CUCHILLO": 2, "PLASTICO TENEDOR": 1}, "SIBARITA": {"QUESO PARAGUAY": 1, "ALMIDON": 2, "COMINO": 0, "HARINA DE MAIZ": 0, "OREGANO": 1, "PIMIENTA": 0, "ROJO P. AGRIDULCE": 1, "SODA GAUSTICA": 0}, "CASA DEL QUESO": {"PAPA FRITA": 0, "QUESO CHEDDAR": 1, "PAPEL FRITO": 0}, "Bebidas": {"COCA CON CAFÉ": 1, "COCA LATA": 0, "COCA ZERO LATA": 0, "FANTA MBRUCUYA": 2, "FANTA NARANJA": 1, "FANTA UVA": 4, "GUARANA ANTARTICA": 1, "GUARANA ANTARTICA ZERO": 1, "MONSTER": 1, "PEPSI": 0, "PEPSI BLACK": 2, "SPRITE": 2}, "ORIENTAL": {"PALITOS": 0, "ARROZ FORTUNA 30KG": 0, "ACELGA": 0}};
-  localStorage.setItem(key, JSON.stringify(
-    Object.fromEntries(
-      Object.entries(todayData).map(([store, qtyMap]) => [
-        store,
-        Object.entries(qtyMap).map(([name, qty]) => ({ name, qty }))
-      ])
-    )
-  ));
-  localStorage.setItem(dateKey, '2026-06-11');
-  localStorage.setItem(initKey, '1');
-})();
-</script>
 </head>
 <body>
 
@@ -283,7 +289,7 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg); color:
     <div class="summary-total" id="summaryTotal">₲ 0</div>
   </div>
   <div class="summary-actions">
-    <button class="btn btn-ghost" onclick="resetQty()">↺ Restaurar</button>
+    <button class="btn btn-ghost" onclick="resetWeek()">↺ Reset</button>
     <button class="btn btn-ghost" onclick="printList()">🖨 Imprimir</button>
     <button class="btn btn-primary" onclick="completeWeek()">✅ Completar y Descargar</button>
   </div>
@@ -334,6 +340,7 @@ const INITIAL_MASTER = {"MEGA":[{"name":"ARROZ COMUN 30KG","unit":"포","qty":1,
 let master = {};
 let thisWeek = {};
 let history = [];
+let weekPayment = {};   // { store: 'efectivo' | 'pagado' }
 
 function loadState() {
   try {
@@ -353,15 +360,21 @@ function loadState() {
     const sw = localStorage.getItem('mercadoThisWeek');
     if (sw) {
       const saved = JSON.parse(sw);
-      for (const store of getStores()) {
-        if (!saved[store] || !thisWeek[store]) continue;
-        saved[store].forEach((item, idx) => {
-          if (thisWeek[store][idx] && item.name === thisWeek[store][idx].name) {
-            thisWeek[store][idx].qty = item.qty;
+      for (const store of Object.keys(saved)) {
+        if (!thisWeek[store]) thisWeek[store] = [];
+        saved[store].forEach(item => {
+          const found = thisWeek[store].find(x => x.name === item.name);
+          if (found) {
+            found.qty = item.qty || 0;
+            if (item.unit) found.unit = item.unit;
+          } else if (item.temp) {
+            thisWeek[store].push({ ...item });
           }
         });
       }
     }
+    const pay = localStorage.getItem('mercadoPayment');
+    if (pay) weekPayment = JSON.parse(pay);
     const savedDate = localStorage.getItem('mercadoThisWeekDate');
     if (savedDate) setTimeout(() => {
       const el = document.getElementById('purchaseDate');
@@ -377,6 +390,7 @@ function saveState() {
 
 function saveThisWeek() {
   localStorage.setItem('mercadoThisWeek', JSON.stringify(thisWeek));
+  localStorage.setItem('mercadoPayment', JSON.stringify(weekPayment));
   const dateEl = document.getElementById('purchaseDate');
   if (dateEl) localStorage.setItem('mercadoThisWeekDate', dateEl.value);
   flashSaveBadge();
@@ -416,10 +430,16 @@ function renderInput() {
     const storeSub = thisWeek[store].reduce((s,p)=>s+p.qty*p.price,0);
     const block = document.createElement('div');
     block.className = 'store-block';
+    const pagado = weekPayment[store] === 'pagado';
     block.innerHTML = `
       <div class="store-hdr" style="background:${color}">
         <span>${store}</span>
-        <span class="store-sub" id="sub-${key}">₲ ${fmt(storeSub)}</span>
+        <span style="display:flex;align-items:center;gap:10px">
+          <button class="pay-toggle ${pagado?'is-pagado':''}" onclick="togglePayment('${store}')"
+                  title="Forma de pago">${pagado ? '🏦 PAGADO' : '💵 Efectivo'}</button>
+          <button class="temp-add-btn" onclick="openTempItemModal('${store}')" title="Agregar item temporal">＋ item</button>
+          <span class="store-sub" id="sub-${key}">₲ ${fmt(storeSub)}</span>
+        </span>
       </div>
       <div class="store-rows" id="rows-${key}"></div>`;
     container.appendChild(block);
@@ -436,41 +456,60 @@ function renderStoreRows(store) {
   const items = thisWeek[store];
   const masterItems = master[store] || [];
   items.forEach((p, idx) => {
-    const mi = masterItems[idx] || {};
+    const mp = masterItems.find(x => x.name === p.name);
+    const unitChanged = mp && mp.unit !== p.unit;
     const div = document.createElement('div');
-    div.className = 'item-row';
+    div.className = 'item-row' + (p.temp ? ' is-temp' : '');
     div.innerHTML = `
-      <div class="item-name">${p.name}</div>
-      <div class="item-unit">${p.unit}</div>
+      <div class="item-name">${p.name}${p.temp ? '<span class="temp-tag">temporal</span>' : ''}</div>
+      <input class="unit-input ${unitChanged ? 'changed' : ''}" type="text" value="${p.unit||''}"
+             id="unit-${key}-${idx}" onchange="setUnit('${store}',${idx},this.value)"
+             title="Editar unidad solo para esta semana">
       <div class="qty-wrap">
         <button class="qty-btn" onclick="adjustQty('${store}',${idx},-1)">−</button>
-        <input class="qty-input ${p.qty !== mi.qty ? 'changed' : ''}" type="number" min="0" value="${p.qty}"
+        <input class="qty-input ${p.qty > 0 ? 'changed' : ''}" type="number" min="0" step="0.5" value="${p.qty}"
                id="qty-${key}-${idx}" onchange="setQty('${store}',${idx},this.value)">
         <button class="qty-btn" onclick="adjustQty('${store}',${idx},+1)">+</button>
       </div>
-      <div class="item-sub" id="isub-${key}-${idx}">₲ ${fmt(p.qty*p.price)}</div>`;
+      <div class="item-sub" id="isub-${key}-${idx}">
+        ${p.temp ? `<button class="temp-del" onclick="deleteTempItem('${store}',${idx})" title="Quitar">✕</button>` : `₲ ${fmt(p.qty*p.price)}`}
+      </div>`;
     container.appendChild(div);
   });
 }
 
 function adjustQty(store, idx, delta) {
-  thisWeek[store][idx].qty = Math.max(0, (thisWeek[store][idx].qty||0) + delta);
+  const cur = Number(thisWeek[store][idx].qty) || 0;
+  thisWeek[store][idx].qty = Math.max(0, Math.round((cur + delta) * 100) / 100);
   updateRowUI(store, idx);
   saveThisWeek();
 }
 function setQty(store, idx, val) {
-  thisWeek[store][idx].qty = Math.max(0, parseInt(val)||0);
+  const n = parseFloat(String(val).replace(',', '.'));
+  thisWeek[store][idx].qty = Math.max(0, isNaN(n) ? 0 : Math.round(n * 100) / 100);
   updateRowUI(store, idx);
   saveThisWeek();
+}
+function setUnit(store, idx, val) {
+  thisWeek[store][idx].unit = (val || '').trim();
+  const key = storeKey(store);
+  const mp = (master[store]||[]).find(x => x.name === thisWeek[store][idx].name);
+  const el = document.getElementById(`unit-${key}-${idx}`);
+  if (el) el.className = 'unit-input ' + (mp && mp.unit !== thisWeek[store][idx].unit ? 'changed' : '');
+  saveThisWeek();
+}
+function togglePayment(store) {
+  weekPayment[store] = weekPayment[store] === 'pagado' ? 'efectivo' : 'pagado';
+  saveThisWeek();
+  renderInput();
 }
 function updateRowUI(store, idx) {
   const key = storeKey(store);
   const p = thisWeek[store][idx];
-  const mi = (master[store]||[])[idx] || {};
   const inp = document.getElementById(`qty-${key}-${idx}`);
   const sub = document.getElementById(`isub-${key}-${idx}`);
-  if (inp) { inp.value = p.qty; inp.className = 'qty-input ' + (p.qty !== mi.qty ? 'changed' : ''); }
-  if (sub) sub.textContent = '₲ ' + fmt(p.qty * p.price);
+  if (inp) { inp.value = p.qty; inp.className = 'qty-input ' + (p.qty > 0 ? 'changed' : ''); }
+  if (sub && !p.temp) sub.textContent = '₲ ' + fmt(p.qty * p.price);
   const storeSub = thisWeek[store].reduce((s,x)=>s+x.qty*x.price,0);
   const subEl = document.getElementById('sub-'+key);
   if (subEl) subEl.textContent = '₲ ' + fmt(storeSub);
@@ -492,11 +531,70 @@ function flashSaveBadge() {
   el.style.color = 'var(--green)';
   setTimeout(() => { el.style.color = 'var(--text3)'; }, 2000);
 }
-function resetQty() {
-  initThisWeek();
+function resetWeek() {
+  showModal('Reiniciar lista',
+    `<p style="color:var(--text2);font-size:15px;line-height:1.7">Se pondrán todas las cantidades en <strong>0</strong> y se quitarán los items temporales.<br>El historial guardado no se borra.</p>`,
+    [
+      {label:'Cancelar', cls:'btn-outline', fn: closeModal},
+      {label:'Reiniciar', cls:'btn-red', fn: () => {
+        initThisWeek();
+        weekPayment = {};
+        saveThisWeek();
+        renderInput();
+        closeModal();
+        showToast('Lista reiniciada');
+      }}
+    ]);
+}
+
+// ── 임시 항목 (이번주만) ──
+function openTempItemModal(store) {
+  showModal('Item temporal — ' + store, `
+    <p style="font-size:13px;color:var(--text3);margin-bottom:14px">Solo para esta semana. No se guarda en Productos.</p>
+    <div class="form-group">
+      <label>Producto</label>
+      <input class="form-input" id="t-name" placeholder="Ej: COSTILLA DE CERDO" style="width:100%">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Cantidad</label>
+        <input class="form-input" id="t-qty" type="number" min="0" step="0.5" value="1">
+      </div>
+      <div class="form-group">
+        <label>Unidad</label>
+        <input class="form-input" id="t-unit" value="UNI" placeholder="UNI / kg / CAJA">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Precio (₲) — opcional</label>
+      <input class="form-input" id="t-price" type="number" min="0" value="0" style="width:100%">
+    </div>`, [
+    {label:'Cancelar', cls:'btn-outline', fn: closeModal},
+    {label:'Agregar', cls:'btn-green', fn: () => {
+      const name = document.getElementById('t-name').value.trim().toUpperCase();
+      if (!name) { showToast('⚠️ Ingrese el nombre'); return; }
+      if (!thisWeek[store]) thisWeek[store] = [];
+      thisWeek[store].push({
+        name,
+        unit: document.getElementById('t-unit').value.trim() || 'UNI',
+        qty: Math.max(0, parseFloat(document.getElementById('t-qty').value) || 0),
+        price: parseInt(document.getElementById('t-price').value) || 0,
+        temp: true
+      });
+      saveThisWeek();
+      renderInput();
+      closeModal();
+      showToast('✅ Item temporal agregado');
+    }}
+  ]);
+  setTimeout(() => document.getElementById('t-name')?.focus(), 100);
+}
+
+function deleteTempItem(store, idx) {
+  thisWeek[store].splice(idx, 1);
   saveThisWeek();
   renderInput();
-  showToast('Cantidades restauradas');
+  showToast('Item quitado');
 }
 
 // ════════════════════════════════════════════════════════════
@@ -510,7 +608,7 @@ function gatherWeek() {
     if (!thisWeek[store]) continue;
     for (const p of thisWeek[store]) {
       if (p.qty > 0) {
-        allItems.push({ store, name: p.name, unit: p.unit, qty: p.qty, price: p.price });
+        allItems.push({ store, name: p.name, unit: p.unit, qty: p.qty, price: p.price, temp: !!p.temp });
         const amt = p.qty * p.price;
         const grp = STORE_GROUP[store] || 'Otros';
         totals[grp] = (totals[grp]||0) + amt;
@@ -541,14 +639,11 @@ function completeWeek() {
 }
 
 function doSave(dateVal, allItems, totals, total) {
-  history.unshift({ date: dateVal, items: allItems, totals, total });
+  history.unshift({ date: dateVal, items: allItems, totals, total, payment: { ...weekPayment } });
   saveState();
-  localStorage.removeItem('mercadoThisWeek');
-  localStorage.removeItem('mercadoThisWeekDate');
+  saveThisWeek();          // 리스트 유지 (Reset 버튼으로만 초기화)
   generateExcel(dateVal, allItems, total);
-  showToast('✅ Guardado. Descargando Excel...');
-  initThisWeek();
-  renderInput();
+  showToast('✅ Guardado. La lista se mantiene.');
 }
 
 // ════════════════════════════════════════════════════════════
@@ -567,7 +662,9 @@ function buildColumns(allItems) {
       curStore = it.store;
     }
     num++;
-    curBlock.items.push({ num, name: it.name, qtyStr: `${it.qty} ${it.unit}` });
+    const q = Number(it.qty);
+    const qStr = Number.isInteger(q) ? String(q) : String(q);
+    curBlock.items.push({ name: it.name, qtyStr: `${qStr} ${it.unit || ''}`.trim() });
   }
   if (curBlock) blocks.push(curBlock);
 
@@ -588,7 +685,7 @@ function buildColumns(allItems) {
 
 function generateExcel(dateVal, allItems, total) {
   const wb = XLSX.utils.book_new();
-  const cols = buildColumns(allItems); // cols[i] = [{store, items:[{num,name,qtyStr}]}]
+  const cols = buildColumns(allItems);
 
   // 각 컬럼을 행 배열로 평탄화
   const flatCols = cols.map(colBlocks => {
@@ -600,34 +697,33 @@ function generateExcel(dateVal, allItems, total) {
     return rows;
   });
 
-  const maxLen = Math.max(...flatCols.map(c=>c.length));
+  const maxLen = Math.max(...flatCols.map(c => c.length), 0);
   const data = [];
-  data.push([`LISTA DE COMPRAS   ${dateVal}`,'','','','','','','','','','','','','','',`TOTAL: ${fmt(total)} Gs.`,'']);
-  data.push(['☐=comprado','','','','☐=recibido','','','','','','','','','','','','']);
-  data.push([]);
+  // 제목행
+  data.push(['', `LISTA DE COMPRAS   ${dateVal}`, '', '', '', '', '', '', '']);
 
   for (let r = 0; r < maxLen; r++) {
     const row = [];
     for (let c = 0; c < 3; c++) {
       const ln = flatCols[c] ? flatCols[c][r] : null;
-      if (!ln) { row.push('','','','',''); }
-      else if (ln.type === 'hdr') { row.push('','','▶ '+ln.store,'',''); }
-      else { row.push('☐', ln.num, ln.name, ln.qtyStr, '☐'); }
-      if (c < 2) row.push('');
+      if (!ln) { row.push('', '', ''); }
+      else if (ln.type === 'hdr') {
+        row.push('▶ ' + ln.store + (weekPayment[ln.store] === 'pagado' ? '   (PAGADO)' : ''), '', '');
+      }
+      else { row.push(ln.name, ln.qtyStr, '☐'); }
     }
     data.push(row);
   }
 
   const ws = XLSX.utils.aoa_to_sheet(data);
   ws['!cols'] = [
-    {wch:3},{wch:3},{wch:23},{wch:9},{wch:3},
-    {wch:1.5},
-    {wch:3},{wch:3},{wch:23},{wch:9},{wch:3},
-    {wch:1.5},
-    {wch:3},{wch:3},{wch:23},{wch:9},{wch:3},
+    {wch:24},{wch:10},{wch:4},
+    {wch:24},{wch:10},{wch:4},
+    {wch:24},{wch:10},{wch:4},
   ];
+  ws['!merges'] = [{ s:{r:0,c:1}, e:{r:0,c:5} }];
   ws['!pageSetup'] = { orientation: 'landscape', paperSize: 9, fitToPage: true, fitToWidth: 1, fitToHeight: 1 };
-  ws['!margins'] = { left:0.3, right:0.3, top:0.4, bottom:0.4, header:0.2, footer:0.2 };
+  ws['!margins'] = { left:0.25, right:0.25, top:0.5, bottom:0.5, header:0.2, footer:0.2 };
   XLSX.utils.book_append_sheet(wb, ws, 'Lista de Compras');
   XLSX.writeFile(wb, `lista_compras_${dateVal.replace(/-/g,'')}.xlsx`);
 }
@@ -637,28 +733,29 @@ function generateExcel(dateVal, allItems, total) {
 // ════════════════════════════════════════════════════════════
 function printList() {
   const dateVal = document.getElementById('purchaseDate').value || '';
-  const { allItems, total } = gatherWeek();
+  const { allItems } = gatherWeek();
   if (!allItems.length) { showToast('⚠️ No hay productos con cantidad'); return; }
 
-  const cols = buildColumns(allItems);  // cols[i] = [{store, items:[{num,name,qtyStr}]}]
+  const cols = buildColumns(allItems);
 
   let colsHtml = '';
   for (const colBlocks of cols) {
     let colHtml = '<div class="print-col">';
     for (const block of colBlocks) {
-      const color = getStoreColor(block.store);
+      const pagado = weekPayment[block.store] === 'pagado';
       let itemsHtml = '';
       for (const it of block.items) {
         itemsHtml += `<div class="print-item">
-          <span class="print-chk"></span>
-          <span class="print-num">${it.num}</span>
           <span class="print-pname">${it.name}</span>
           <span class="print-pqty">${it.qtyStr}</span>
           <span class="print-chk"></span>
         </div>`;
       }
       colHtml += `<div class="print-store-block">
-        <div class="print-store-hdr" style="background:${color}">▶ ${block.store}</div>
+        <div class="print-store-hdr">
+          <span>▶ ${block.store}</span>
+          ${pagado ? '<span class="print-pagado">PAGADO</span>' : ''}
+        </div>
         ${itemsHtml}
       </div>`;
     }
@@ -668,20 +765,8 @@ function printList() {
 
   document.getElementById('printArea').innerHTML = `
     <div class="print-sheet">
-      <div class="print-title">
-        <span>LISTA DE COMPRAS &nbsp; ${dateVal}</span>
-        <span class="print-total">TOTAL: ₲ ${fmt(total)}</span>
-      </div>
-      <div class="print-legend">
-        <span>☐ izquierda = comprado</span>
-        <span>☐ derecha = recibido / verificado</span>
-      </div>
+      <div class="print-title">LISTA DE COMPRAS &nbsp;&nbsp; ${dateVal}</div>
       <div class="print-cols">${colsHtml}</div>
-      <div class="print-foot">
-        <span>Comprador: ___________________</span>
-        <span>Receptor: ___________________</span>
-        <span>Fecha de recepción: ____ / ____ / ______</span>
-      </div>
     </div>`;
   window.print();
 }
@@ -831,13 +916,12 @@ function renderMaster() {
       </div>
       <div style="overflow-x:auto">
         <table class="master-table">
-          <thead><tr><th style="width:30%">Producto</th><th>Unidad</th><th>Cant. habitual</th><th>Precio (₲)</th><th>Nota</th><th style="width:140px"></th></tr></thead>
+          <thead><tr><th style="width:34%">Producto</th><th>Unidad</th><th>Precio (₲)</th><th>Nota</th><th style="width:140px"></th></tr></thead>
           <tbody>
             ${items.map(p => `
               <tr>
                 <td><strong>${p.name}</strong></td>
                 <td>${p.unit}</td>
-                <td>${p.qty}</td>
                 <td>₲ ${fmt(p.price)}</td>
                 <td style="font-size:12px;color:var(--text3)">${p.note||''}</td>
                 <td>
@@ -877,13 +961,9 @@ function productForm(p = {}, fixedStore = null) {
         <input class="form-input" id="f-unit" value="${p.unit||'UNI'}" placeholder="kg / CAJA / UNI">
       </div>
       <div class="form-group">
-        <label>Cantidad habitual</label>
-        <input class="form-input" id="f-qty" type="number" min="0" value="${p.qty??1}">
+        <label>Precio (₲)</label>
+        <input class="form-input" id="f-price" type="number" min="0" value="${p.price||0}">
       </div>
-    </div>
-    <div class="form-group">
-      <label>Precio (₲)</label>
-      <input class="form-input" id="f-price" type="number" min="0" value="${p.price||0}">
     </div>
     <div class="form-group">
       <label>Nota (opcional)</label>
@@ -902,7 +982,6 @@ function openAddModal(store = null) {
       master[s].push({
         name,
         unit: document.getElementById('f-unit').value.trim() || 'UNI',
-        qty: parseInt(document.getElementById('f-qty').value)||0,
         price: parseInt(document.getElementById('f-price').value)||0,
         note: document.getElementById('f-note').value.trim()
       });
@@ -927,7 +1006,6 @@ function openEditModal(store, idx) {
       master[store][idx] = {
         name,
         unit: document.getElementById('f-unit').value.trim() || 'UNI',
-        qty: parseInt(document.getElementById('f-qty').value)||0,
         price: parseInt(document.getElementById('f-price').value)||0,
         note: document.getElementById('f-note').value.trim()
       };
@@ -1036,10 +1114,10 @@ function moveItem(store, idx, dir) {
 
 function exportMasterExcel() {
   const wb = XLSX.utils.book_new();
-  const data = [['Proveedor','Producto','Unidad','Cant. habitual','Precio','Nota']];
+  const data = [['Proveedor','Producto','Unidad','Precio','Nota']];
   for (const store of getStores()) {
     if (!master[store]) continue;
-    for (const p of master[store]) data.push([store, p.name, p.unit, p.qty, p.price, p.note||'']);
+    for (const p of master[store]) data.push([store, p.name, p.unit, p.price, p.note||'']);
   }
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(data), 'Productos');
   XLSX.writeFile(wb, `productos_${today()}.xlsx`);
